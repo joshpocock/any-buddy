@@ -1,7 +1,4 @@
 # claude-code-any-buddy
-
-Only tested this on Linux will probably need updates for windows and mac as the binaries are in different locations. I'm open to PRs
-
 Pick any Claude Code companion pet you want.
 
 ```bash
@@ -31,10 +28,19 @@ The patch is safe — it uses `rename()` to atomically swap the binary, which is
 
 ## Requirements
 
-- **Linux only** — the tool patches a compiled ELF binary at `~/.local/share/claude/versions/`. macOS and Windows use different binary formats and installation paths
 - **Node.js >= 18** — for the CLI and TUI
 - **Bun** — required for hash computation (Claude Code uses `Bun.hash`/wyhash internally; FNV-1a produces different results). Bun is typically already installed if you have Claude Code
-- **Claude Code** — must be installed via the standard method (binary at `~/.local/bin/claude`)
+- **Claude Code** — installed via any standard method
+
+### Platform support
+
+| Platform | Status | Binary location (auto-detected) |
+|---|---|---|
+| Linux | Tested | `~/.local/share/claude/versions/<ver>` |
+| macOS | Should work | `~/.local/bin/claude`, `/opt/homebrew/bin/claude`, `~/.claude/local/claude` |
+| Windows | Should work | `%LOCALAPPDATA%\Programs\claude\claude.exe`, npm global shim |
+
+The binary is found automatically via `which`/`where` and platform-specific known paths. If auto-detection fails, set `CLAUDE_BINARY=/path/to/binary` manually.
 
 ## Install
 
@@ -93,6 +99,7 @@ claude-code-any-buddy --species dragon --rarity legendary --eye '✦' --hat wiza
 | `--hat <name>` | `-t` | Pre-select hat |
 | `--name <name>` | `-n` | Rename your companion |
 | `--yes` | `-y` | Skip all confirmation prompts |
+| `--shiny` | | Require shiny variant (~100x longer search) |
 | `--no-hook` | | Don't offer to install the auto-patch hook |
 | `--silent` | | Suppress output (for `apply` in hooks) |
 
@@ -178,7 +185,7 @@ Each pet has 5 stats: **DEBUGGING**, **PATIENCE**, **CHAOS**, **WISDOM**, **SNAR
 
 ### Shiny
 
-1% chance per seed. The brute-force search ignores shiny by default, but you could modify the finder to require it (at the cost of ~100x longer search time).
+1% chance per seed. The interactive flow asks if you want shiny, or pass `--shiny` on the command line. Requiring shiny takes ~100x longer to find a matching salt (seconds instead of milliseconds) since only 1 in 100 seeds produce a shiny pet.
 
 ## How the auto-patch hook works
 
@@ -242,7 +249,7 @@ This patches the salt back to the original, removes the SessionStart hook, and c
 
 ## Limitations
 
-- **Linux only** — different binary format on macOS/Windows
+- **Tested on Linux** — macOS and Windows should work but are not yet tested. Please [open an issue](https://github.com/cpaczek/any-buddy/issues) if you hit problems
 - **Requires Bun** — needed for matching Claude Code's wyhash implementation
 - **Salt string dependent** — if Anthropic changes the salt from `friend-2026-401` in a future version, the patch logic would need updating (but the tool will detect this and warn you)
 - **Stats not selectable** — you pick species/rarity/eyes/hat; stats are whatever the matching salt produces

@@ -14,6 +14,7 @@ function parseArgs(argv) {
     else if (arg === '--eye' || arg === '-e') { flags.eye = args[++i]; }
     else if (arg === '--hat' || arg === '-t') { flags.hat = args[++i]; }
     else if (arg === '--name' || arg === '-n') { flags.name = args[++i]; }
+    else if (arg === '--shiny') { flags.shiny = true; }
     else if (arg === '--silent') { flags.silent = true; }
     else if (arg === '--no-hook') { flags.noHook = true; }
     else if (arg === '--yes' || arg === '-y') { flags.yes = true; }
@@ -51,7 +52,13 @@ try {
   if (err.name === 'ExitPromptError') {
     process.exit(0);
   }
-  console.error(err.message);
+  console.error(`\n  Error: ${err.message}`);
+  // If the error message doesn't already include the issue URL, add it
+  if (!err.message.includes('github.com/cpaczek/any-buddy')) {
+    console.error(`\n  If this seems like a bug, please report it at:`);
+    console.error(`  https://github.com/cpaczek/any-buddy/issues`);
+    console.error(`\n  Include your OS (${process.platform}), Node ${process.version}, and the error above.`);
+  }
   process.exit(1);
 }
 
@@ -78,6 +85,7 @@ Options:
   -t, --hat <name>       Hat (none, crown, tophat, propeller, halo, wizard,
                          beanie, tinyduck)
   -n, --name <name>      Rename your companion
+  --shiny                Require shiny (~100x longer search)
   -y, --yes              Skip confirmation prompts
   --no-hook              Don't offer to install the SessionStart hook
   --silent               Suppress output (for apply command in hooks)
