@@ -23,7 +23,7 @@ Claude Code's companion system generates your pet's visual traits (species, rari
 
 1. **You pick** your desired species, rarity, eyes, and hat through an interactive TUI
 2. **Brute-force search** finds a replacement salt string that produces your chosen pet when combined with your real user ID (typically takes <100ms)
-3. **Binary patch** replaces the salt in the compiled Claude Code ELF binary (all 3 occurrences) using an atomic rename, with a backup created first
+3. **Binary patch** replaces the salt in the compiled Claude Code binary (all 3 occurrences) using an atomic rename, with a backup created first
 4. **Auto-repair hook** (optional) installs a `SessionStart` hook in `~/.claude/settings.json` that re-applies the patch after Claude Code updates
 
 The patch is safe — it uses `rename()` to atomically swap the binary, which is the same technique package managers use. A running Claude session continues using the old binary in memory; the new pet appears on next launch.
@@ -229,7 +229,7 @@ The hook adds negligible startup time (~50ms) when no patch is needed.
 
 ## How the binary patch works
 
-Claude Code is a compiled Bun ELF binary at `~/.local/share/claude/versions/<version>`. The salt string `"friend-2026-401"` appears exactly 3 times:
+Claude Code is a compiled Bun binary (ELF on Linux, Mach-O on macOS) at `~/.local/share/claude/versions/<version>` (Linux) or the path shown by `which claude`. The salt string `"friend-2026-401"` appears exactly 3 times:
 - 2 occurrences in the bundled JavaScript code sections
 - 1 occurrence in a string table / data section
 
@@ -239,6 +239,7 @@ The patch:
 3. Replaces each with the new salt (always exactly 15 characters — same length, no byte offset shifts)
 4. Writes to a temp file, then atomically renames it over the original
 5. Verifies by re-reading
+6. On macOS, re-signs the binary with an ad-hoc signature (`codesign --force --sign -`)
 
 The atomic rename (`rename()` syscall) is safe even while Claude Code is running — the OS keeps the old inode open for any running process. The new binary takes effect on next launch.
 
@@ -264,7 +265,7 @@ This patches the salt back to the original, removes the SessionStart hook, and c
 
 ## Limitations
 
-- **Tested on Linux and macOS** — Windows should work but is not yet tested. Please [open an issue](https://github.com/cpaczek/any-buddy/issues) if you hit problems
+- **Tested on Linux and macOS** — on macOS, the binary is automatically ad-hoc re-signed after patching to avoid code signature invalidation. Windows should work but is not yet tested. Please [open an issue](https://github.com/cpaczek/any-buddy/issues) if you hit problems
 - **Requires Bun** — needed for matching Claude Code's wyhash implementation
 - **Salt string dependent** — if Anthropic changes the salt from `friend-2026-401` in a future version, the patch logic would need updating (but the tool will detect this and warn you)
 - **Stats partially selectable** — you can pick which stat is highest (peak) and lowest (dump), but not exact values
