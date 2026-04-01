@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runInteractive, runPreview, runCurrent, runApply, runRestore, runRehatch } from '../lib/tui.mjs';
+import { ISSUE_URL, diagnostics } from '../lib/constants.mjs';
 
 function parseArgs(argv) {
   const args = argv.slice(2);
@@ -61,9 +62,9 @@ try {
   console.error(`\n  Error: ${err.message}`);
   // If the error message doesn't already include the issue URL, add it
   if (!err.message.includes('github.com/cpaczek/any-buddy')) {
-    console.error(`\n  If this seems like a bug, please report it at:`);
-    console.error(`  https://github.com/cpaczek/any-buddy/issues`);
-    console.error(`\n  Include your OS (${process.platform}), Node ${process.version}, and the error above.`);
+    console.error(`\n  If this seems like a bug, please report it at:\n  ${ISSUE_URL}`);
+    console.error(`\n  Please include the full error output above and:`);
+    console.error(diagnostics({ Args: process.argv.slice(2).join(' ') || '(none)' }));
   }
   process.exit(1);
 }
